@@ -1,0 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Company {
+  id               String   @id @default(uuid())
+  name             String
+  industry         String
+  size             String   // Enum-like string
+  investmentStage  String?
+  websiteUrl       String?
+  newsCount        Int      @default(0)
+  score            Float    @default(0.0)
+  tags             String[]
+  leads            Lead[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Lead {
+  id               String   @id @default(uuid())
+  name             String
+  position         String
+  email            String   @unique
+  phone            String?
+  status           LeadStatus @default(DISCOVERED)
+  priority         Priority   @default(COLD)
+  companyId        String
+  company          Company    @relation(fields: [companyId], references: [id])
+  emails           Email[]
+  logs             InteractionLog[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Campaign {
+  id               String   @id @default(uuid())
+  title            String
+  description      String?
+  isActive         Boolean  @default(true)
+  sentCount        Int      @default(0)
+  openCount        Int      @default(0)
+  clickCount       Int      @default(0)
+  emails           Email[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Email {
+  id               String   @id @default(uuid())
+  subject          String
+  body             String
+  sentAt           DateTime?
+  isOpened         Boolean  @default(false)
+  openedAt         DateTime?
+  responseReceived Boolean  @default(false)
+  leadId           String
+  lead             Lead     @relation(fields: [leadId], references: [id])
+  campaignId       String
+  campaign         Campaign @relation(fields: [campaignId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model InteractionLog {
+  id               String   @id @default(uuid())
+  type             LogType
+  content          String
+  authorId         String?  // Internal user ID
+  leadId           String
+  lead             Lead     @relation(fields: [leadId], references: [id])
+  createdAt        DateTime @default(now())
+}
+
+enum LeadStatus {
+  DISCOVERED
+  SENT
+  RESPONDED
+  MEETING_SCHEDULED
+  CANCELLED
+}
+
+enum Priority {
+  HOT
+  WARM
+  COLD
+}
+
+enum LogType {
+  NOTE
+  STATUS_CHANGE
+  EMAIL_SENT
+  PHONE_CALL
+}
